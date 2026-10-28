@@ -1,0 +1,578 @@
+html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TRẮC NGHIỆM ONLINE - CÔNG NGHỆ 12</title>
+  <style>
+    /* PHONG CÁCH MONOCHROME MINIMALISM & FONT ARIAL CHUẨN */
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #FFFFFF;
+      color: #111111;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+    .content-text { font-size: 12px !important; line-height: 1.6; }
+    .container { width: 100%; max-width: 1080px; margin: 0 auto; padding: 14px; }
+    .card { border: 1px solid #D9D9D9; background: #FFFFFF; border-radius: 3px; padding: 14px; margin-bottom: 14px; }
+    .bg-light { background-color: #F5F5F5; }
+    .text-muted { color: #666666; }
+
+    /* Button đơn sắc */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 7px 14px; font-size: 12px; font-weight: bold;
+      border: 1px solid #111111; background: #FFFFFF; color: #111111;
+      cursor: pointer; border-radius: 3px; text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { background: #111111; color: #FFFFFF; }
+    .btn-dark { background: #111111; color: #FFFFFF; }
+    .btn-dark:hover:not(:disabled) { background: #333333; }
+    .btn:disabled { border-color: #D9D9D9; color: #999999; cursor: not-allowed; background: #F5F5F5; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; min-height: 26px; }
+
+    /* Header */
+    header { border-bottom: 1px solid #111111; background: #FFFFFF; position: sticky; top: 0; z-index: 100; }
+    .header-inner { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; max-width: 1080px; margin: 0 auto; }
+    
+    /* Layout thi trắc nghiệm */
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    .exam-layout { display: flex; gap: 14px; align-items: flex-start; }
+    .exam-main { flex: 1; min-width: 0; }
+    .exam-sidebar { width: 280px; position: sticky; top: 56px; max-height: calc(100vh - 75px); overflow-y: auto; }
+
+    /* Palette số câu hỏi */
+    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
+    .palette-btn {
+      width: 100%; aspect-ratio: 1; border: 1px solid #D9D9D9; background: #FFFFFF;
+      font-size: 11px; font-weight: bold; color: #111111; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; border-radius: 2px; position: relative;
+    }
+    .palette-btn.current { border: 2px solid #111111; }
+    .palette-btn.answered { background: #111111; color: #FFFFFF; border-color: #111111; }
+    .palette-btn.flagged::after { content: "⚑"; position: absolute; top: 1px; right: 2px; font-size: 9px; color: #111111; }
+    .palette-btn.answered.flagged::after { color: #FFFFFF; }
+
+    /* Hộp câu hỏi */
+    .question-box { border: 1px solid #111111; padding: 16px; background: #FFFFFF; margin-bottom: 12px; }
+    .question-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E5E5; padding-bottom: 6px; margin-bottom: 10px; }
+    .question-tag { font-size: 11px; font-weight: bold; padding: 2px 6px; background: #F5F5F5; border: 1px solid #D9D9D9; }
+
+    /* Lựa chọn MC */
+    .option-item {
+      display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; margin-bottom: 6px;
+      border: 1px solid #D9D9D9; border-radius: 3px; cursor: pointer; user-select: none;
+    }
+    .option-item:hover { background: #F5F5F5; }
+    .option-item.selected { border: 1px solid #111111; background: #EEEEEE; font-weight: bold; }
+
+    /* Đúng/Sai Table */
+    .tf-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .tf-table th, .tf-table td { border: 1px solid #D9D9D9; padding: 7px 10px; font-size: 12px; text-align: left; }
+    .tf-table th { background: #F5F5F5; }
+    .tf-btn { padding: 4px 8px; border: 1px solid #D9D9D9; background: #FFFFFF; cursor: pointer; font-size: 11px; border-radius: 2px; }
+    .tf-btn.active { background: #111111; color: #FFFFFF; border-color: #111111; font-weight: bold; }
+
+    /* Modal Mobile */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: center; padding: 14px; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: #FFFFFF; border: 2px solid #111111; padding: 14px; max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto; }
+
+    /* Kết quả & Đối chiếu */
+    .review-item { border: 1px solid #D9D9D9; padding: 10px; margin-bottom: 10px; }
+    .review-item.correct { border-left: 4px solid #111111; background: #FAFAFA; }
+    .review-item.incorrect { border-left: 4px dashed #666666; background: #FFFFFF; }
+
+    @media (max-width: 768px) {
+      .exam-sidebar { display: none; }
+      .mobile-palette-toggle { display: inline-flex !important; }
+      .palette-grid { grid-template-columns: repeat(6, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1 style="font-size: 15px; margin: 0;">TRẮC NGHIỆM ONLINE</h1>
+        <div class="content-text text-muted" id="exam-topic-title">Môn: Công nghệ 12 - Điện Điện Tử</div>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn btn-sm mobile-palette-toggle" style="display:none;" id="btn-open-palette">Bảng câu hỏi</button>
+        <button class="btn btn-sm btn-dark" id="btn-header-home" onclick="app.showHome()">Trang chủ</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- VIEW 1: TRANG CHỦ -->
+    <section id="view-home" class="view-section active">
+      <div class="card">
+        <h2 style="font-size: 14px;">NGÂN HÀNG CÂU HỎI THI CHUẨN (BÀI 1 ĐẾN BÀI 6)</h2>
+        <p class="content-text text-muted" style="margin-top: 4px;">
+          Dữ liệu gốc: 180 câu Trắc nghiệm 4 lựa chọn + 36 câu Đúng/Sai đa nhận định (144 ý).
+        </p>
+      </div>
+
+      <div class="card bg-light">
+        <h3>1. Trạng thái cơ sở dữ liệu</h3>
+        <p class="content-text" style="margin: 6px 0;" id="status-db-text">
+          Đang kiểm tra tệp dữ liệu <code>data.js</code>...
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-sm" onclick="app.showPreview()">Xem toàn bộ 216 câu hỏi</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>2. Cấu hình làm bài thi</h3>
+        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+          
+          <div>
+            <label class="content-text" style="font-weight:bold; display:block; margin-bottom:4px;">Chọn phạm vi đề thi:</label>
+            <select id="cfg-topic" class="btn content-text" style="width: 100%; max-width: 420px; text-align: left;">
+              <option value="ALL">Toàn bộ 6 bài (Bài 1 → Bài 6 - Đủ 216 câu)</option>
+              <option value="BÀI 1">Bài 1: Giới thiệu tổng quan về kĩ thuật điện (30 MC + 6 Đ/S)</option>
+              <option value="BÀI 2">Bài 2: Ngành nghề trong lĩnh vực kĩ thuật điện (30 MC + 6 Đ/S)</option>
+              <option value="BÀI 3">Bài 3: Mạch điện xoay chiều ba pha (30 MC + 6 Đ/S)</option>
+              <option value="BÀI 4">Bài 4: Hệ thống điện quốc gia (30 MC + 6 Đ/S)</option>
+              <option value="BÀI 5">Bài 5: Sản xuất điện năng (30 MC + 6 Đ/S)</option>
+              <option value="BÀI 6">Bài 6: Mạng điện sản xuất quy mô nhỏ (30 MC + 6 Đ/S)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <label class="content-text" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="cfg-shuffle-q" checked> <span>Đảo thứ tự câu hỏi</span>
+            </label>
+            <label class="content-text" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="cfg-shuffle-opt" checked> <span>Đảo thứ tự các phương án (A, B, C, D)</span>
+            </label>
+          </div>
+
+          <div>
+            <label class="content-text" style="font-weight:bold; display:block; margin-bottom:4px;">Số lượng câu thi:</label>
+            <select id="cfg-limit" class="btn content-text" style="width: 180px;">
+              <option value="20">20 câu</option>
+              <option value="36">36 câu (1 bài đầy đủ)</option>
+              <option value="50">50 câu</option>
+              <option value="ALL" selected>Tất cả câu trong phạm vi</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 16px; border-top: 1px solid #D9D9D9; padding-top: 14px;">
+          <button class="btn btn-dark" style="min-width: 160px; height: 38px;" onclick="app.startExam()">BẮT ĐẦU LÀM BÀI</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: LÀM BÀI -->
+    <section id="view-exam" class="view-section">
+      <div class="exam-layout">
+        
+        <div class="exam-main">
+          <div class="card" style="padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span class="content-text">Tiến độ: <strong id="exam-progress">0/0</strong></span>
+            <button class="btn btn-sm" id="btn-flag" onclick="app.toggleFlag()">⚑ Đánh dấu xem lại</button>
+          </div>
+
+          <div class="question-box" id="question-render-area"></div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+            <button class="btn" id="btn-prev" onclick="app.prevQ()">← Câu trước</button>
+            <button class="btn" id="btn-next" onclick="app.nextQ()">Câu sau →</button>
+          </div>
+
+          <div style="margin-top: 18px; text-align: center;">
+            <button class="btn btn-dark" style="min-width: 180px; height: 38px;" onclick="app.submitExam()">NỘP BÀI THI</button>
+          </div>
+        </div>
+
+        <aside class="exam-sidebar card">
+          <h3 style="font-size: 12px;">BẢNG CÂU HỎI</h3>
+          <div class="palette-grid" id="desktop-palette"></div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- VIEW 3: KẾT QUẢ & CHẤM ĐIỂM -->
+    <section id="view-result" class="view-section">
+      <div class="card" style="text-align: center; padding: 20px 14px;">
+        <h2 style="font-size: 15px;">KẾT QUẢ BÀI THI</h2>
+        <div style="font-size: 32px; font-weight: bold; margin: 10px 0;" id="score-val">0.0 / 10</div>
+        <p class="content-text" id="score-summary" style="margin-bottom: 14px;"></p>
+        <div style="display: flex; justify-content: center; gap: 8px;">
+          <button class="btn btn-dark" onclick="app.startExam()">Làm lại bài này</button>
+          <button class="btn" onclick="app.showHome()">Về trang chủ</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>CHI TIẾT BÀI LÀM VÀ ĐỐI CHIẾU TÀI LIỆU NGUỒN</h3>
+        <div id="review-container" style="margin-top: 10px;"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: XEM TRƯỚC NGÂN HÀNG CÂU HỎI -->
+    <section id="view-preview" class="view-section">
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 14px;">DANH SÁCH TOÀN BỘ CÂU HỎI ĐÃ ĐỐI CHIẾU (<span id="total-count-badge">0</span> CÂU)</h2>
+        <button class="btn btn-sm" onclick="app.showHome()">Đóng</button>
+      </div>
+      <div id="preview-list"></div>
+    </section>
+
+  </main>
+
+  <div class="modal-overlay" id="mobile-modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>DANH SÁCH CÂU HỎI</h3>
+        <button class="btn btn-sm" onclick="app.closeMobileModal()">Đóng</button>
+      </div>
+      <div class="palette-grid" id="mobile-palette"></div>
+    </div>
+  </div>
+
+  <!-- NẠP CƠ SỞ DỮ LIỆU TỪ TỆP data.js -->
+  <script src="data.js"></script>
+
+  <!-- ENGINE XỬ LÝ LÀM BÀI, ĐẢO ĐỀ VÀ CHẤM ĐIỂM -->
+  <script>
+    class ExamController {
+      constructor() {
+        this.allQuestions = (typeof FULL_DATABASE !== 'undefined') ? FULL_DATABASE : [];
+        this.activeQuestions = [];
+        this.currentIndex = 0;
+        this.userAnswers = {};
+        this.flagged = new Set();
+        this.init();
+      }
+
+      init() {
+        const statusEl = document.getElementById('status-db-text');
+        if (this.allQuestions.length > 0) {
+          statusEl.innerHTML = `Đã nạp thành công <strong>${this.allQuestions.length} câu hỏi</strong> từ <code>data.js</code> (Bài 1 - Bài 6 đầy đủ).`;
+        } else {
+          statusEl.innerHTML = `<span style="color:#666;">Chưa tìm thấy <code>data.js</code>. Hãy chắc chắn bạn đã tạo file <code>data.js</code> cùng thư mục với <code>index.html</code>!</span>`;
+        }
+        document.getElementById('btn-open-palette').onclick = () => {
+          document.getElementById('mobile-modal').classList.add('active');
+        };
+      }
+
+      switchView(id) {
+        document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      showHome() {
+        this.switchView('view-home');
+        document.getElementById('btn-open-palette').style.display = 'none';
+      }
+
+      closeMobileModal() {
+        document.getElementById('mobile-modal').classList.remove('active');
+      }
+
+      shuffle(arr) {
+        const c = [...arr];
+        for (let i = c.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [c[i], c[j]] = [c[j], c[i]];
+        }
+        return c;
+      }
+
+      startExam() {
+        if (!this.allQuestions || this.allQuestions.length === 0) {
+          alert("Chưa có câu hỏi trong cơ sở dữ liệu data.js!");
+          return;
+        }
+
+        const topic = document.getElementById('cfg-topic').value;
+        const doShuffleQ = document.getElementById('cfg-shuffle-q').checked;
+        const doShuffleOpt = document.getElementById('cfg-shuffle-opt').checked;
+        const limit = document.getElementById('cfg-limit').value;
+
+        let pool = this.allQuestions.filter(q => topic === 'ALL' || q.topic === topic);
+        if (doShuffleQ) pool = this.shuffle(pool);
+        if (limit !== 'ALL') pool = pool.slice(0, parseInt(limit, 10));
+
+        this.activeQuestions = pool.map(item => {
+          const clone = JSON.parse(JSON.stringify(item));
+          if (clone.type === 'mc' && doShuffleOpt) {
+            const correctText = clone.options.find(o => o.key === clone.correct).text;
+            clone.options = this.shuffle(clone.options);
+            const labels = ["A", "B", "C", "D", "E"];
+            clone.options.forEach((opt, idx) => opt.displayKey = labels[idx]);
+            clone.correctDisplayKey = clone.options.find(o => o.text === correctText).displayKey;
+          } else if (clone.type === 'mc') {
+            clone.options.forEach(opt => opt.displayKey = opt.key);
+            clone.correctDisplayKey = clone.correct;
+          }
+          return clone;
+        });
+
+        this.currentIndex = 0;
+        this.userAnswers = {};
+        this.flagged.clear();
+
+        document.getElementById('btn-open-palette').style.display = 'inline-flex';
+        document.getElementById('exam-topic-title').textContent = (topic === 'ALL' ? 'Toàn bộ 6 bài' : topic);
+
+        this.switchView('view-exam');
+        this.renderPalettes();
+        this.renderQuestion();
+      }
+
+      renderPalettes() {
+        const populate = (cid) => {
+          const box = document.getElementById(cid);
+          box.innerHTML = "";
+          this.activeQuestions.forEach((_, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "palette-btn";
+            btn.textContent = idx + 1;
+            btn.id = `${cid}-btn-${idx}`;
+            if (this.isAnswered(idx)) btn.classList.add('answered');
+            if (idx === this.currentIndex) btn.classList.add('current');
+            if (this.flagged.has(idx)) btn.classList.add('flagged');
+            btn.onclick = () => {
+              this.jumpTo(idx);
+              this.closeMobileModal();
+            };
+            box.appendChild(btn);
+          });
+        };
+        populate('desktop-palette');
+        populate('mobile-palette');
+      }
+
+      updatePaletteBtn(idx) {
+        ['desktop-palette', 'mobile-palette'].forEach(cid => {
+          const b = document.getElementById(`${cid}-btn-${idx}`);
+          if (!b) return;
+          b.className = "palette-btn";
+          if (this.isAnswered(idx)) b.classList.add('answered');
+          if (idx === this.currentIndex) b.classList.add('current');
+          if (this.flagged.has(idx)) b.classList.add('flagged');
+        });
+      }
+
+      isAnswered(idx) {
+        const ans = this.userAnswers[idx];
+        if (!ans) return false;
+        const q = this.activeQuestions[idx];
+        return q.type === 'mc' ? typeof ans === 'string' : Object.keys(ans).length > 0;
+      }
+
+      jumpTo(idx) {
+        const prev = this.currentIndex;
+        this.currentIndex = idx;
+        this.updatePaletteBtn(prev);
+        this.updatePaletteBtn(this.currentIndex);
+        this.renderQuestion();
+      }
+
+      prevQ() { if (this.currentIndex > 0) this.jumpTo(this.currentIndex - 1); }
+      nextQ() { if (this.currentIndex < this.activeQuestions.length - 1) this.jumpTo(this.currentIndex + 1); }
+
+      toggleFlag() {
+        if (this.flagged.has(this.currentIndex)) this.flagged.delete(this.currentIndex);
+        else this.flagged.add(this.currentIndex);
+        this.updateFlagUI();
+        this.updatePaletteBtn(this.currentIndex);
+      }
+
+      updateFlagUI() {
+        const btn = document.getElementById('btn-flag');
+        const isF = this.flagged.has(this.currentIndex);
+        btn.style.background = isF ? "#111111" : "#FFFFFF";
+        btn.style.color = isF ? "#FFFFFF" : "#111111";
+        btn.textContent = isF ? "⚑ Đã đánh dấu" : "⚑ Đánh dấu xem lại";
+      }
+
+      renderQuestion() {
+        const q = this.activeQuestions[this.currentIndex];
+        const total = this.activeQuestions.length;
+
+        let ansCount = 0;
+        for (let i = 0; i < total; i++) if (this.isAnswered(i)) ansCount++;
+        document.getElementById('exam-progress').textContent = `${ansCount}/${total} câu`;
+
+        document.getElementById('btn-prev').disabled = (this.currentIndex === 0);
+        document.getElementById('btn-next').disabled = (this.currentIndex === total - 1);
+        this.updateFlagUI();
+
+        const area = document.getElementById('question-render-area');
+        let html = `
+          <div class="question-header">
+            <div>
+              <span class="question-tag">${q.type === 'mc' ? 'TRẮC NGHIỆM' : 'ĐÚNG / SAI'}</span>
+              <span class="content-text text-muted" style="margin-left: 6px;">[${q.topic}] Nguồn: ${q.source}</span>
+            </div>
+            <strong class="content-text">Câu ${this.currentIndex + 1} / ${total}</strong>
+          </div>
+          <div class="content-text" style="font-weight: bold; margin-bottom: 12px;">${q.question}</div>
+        `;
+
+        if (q.type === 'mc') {
+          const choice = this.userAnswers[this.currentIndex];
+          q.options.forEach(opt => {
+            const isSel = (choice === opt.displayKey);
+            html += `
+              <div class="option-item ${isSel ? 'selected' : ''}" onclick="app.selectMC('${opt.displayKey}')">
+                <input type="radio" name="opt_choice" value="${opt.displayKey}" ${isSel ? 'checked' : ''}>
+                <div class="content-text"><strong>${opt.displayKey}.</strong> ${opt.text}</div>
+              </div>
+            `;
+          });
+        } else if (q.type === 'tf') {
+          const map = this.userAnswers[this.currentIndex] || {};
+          html += `
+            <table class="tf-table">
+              <thead><tr><th>Nhận định</th><th style="width: 120px;">Lựa chọn</th></tr></thead>
+              <tbody>
+          `;
+          q.items.forEach(it => {
+            const val = map[it.key];
+            html += `
+              <tr>
+                <td class="content-text"><strong>${it.key})</strong> ${it.text}</td>
+                <td>
+                  <button type="button" class="tf-btn ${val === true ? 'active' : ''}" onclick="app.selectTF('${it.key}', true)">Đúng</button>
+                  <button type="button" class="tf-btn ${val === false ? 'active' : ''}" onclick="app.selectTF('${it.key}', false)">Sai</button>
+                </td>
+              </tr>
+            `;
+          });
+          html += `</tbody></table>`;
+        }
+
+        area.innerHTML = html;
+      }
+
+      selectMC(key) {
+        this.userAnswers[this.currentIndex] = key;
+        this.updatePaletteBtn(this.currentIndex);
+        this.renderQuestion();
+      }
+
+      selectTF(subKey, val) {
+        if (!this.userAnswers[this.currentIndex]) this.userAnswers[this.currentIndex] = {};
+        this.userAnswers[this.currentIndex][subKey] = val;
+        this.updatePaletteBtn(this.currentIndex);
+        this.renderQuestion();
+      }
+
+      submitExam() {
+        const total = this.activeQuestions.length;
+        let answered = 0;
+        for (let i = 0; i < total; i++) if (this.isAnswered(i)) answered++;
+        const left = total - answered;
+
+        let msg = `Bạn đã hoàn thành ${answered}/${total} câu.`;
+        if (left > 0) msg += `\nCòn ${left} câu chưa làm!`;
+        msg += "\n\nBạn có chắc chắn nộp bài?";
+        if (confirm(msg)) this.grade();
+      }
+
+      grade() {
+        let earned = 0, totalPoints = 0, cor = 0, incor = 0;
+        const box = document.getElementById('review-container');
+        box.innerHTML = "";
+
+        this.activeQuestions.forEach((q, idx) => {
+          const userAns = this.userAnswers[idx];
+          const div = document.createElement('div');
+
+          if (q.type === 'mc') {
+            totalPoints += 1;
+            const ok = (userAns === q.correctDisplayKey);
+            if (ok) { earned += 1; cor++; } else { incor++; }
+            div.className = `review-item ${ok ? 'correct' : 'incorrect'}`;
+            div.innerHTML = `
+              <div class="content-text" style="font-weight:bold; margin-bottom:4px;">
+                [${ok ? 'ĐÚNG' : 'SAI'}] Câu ${idx + 1}: ${q.question}
+              </div>
+              <div class="content-text text-muted">Nguồn: ${q.source}</div>
+              <div class="content-text" style="margin-top:4px;">
+                - Bạn chọn: <strong>${userAns || 'Chưa chọn'}</strong> | Đáp án chuẩn: <strong>${q.correctDisplayKey}</strong>
+              </div>
+            `;
+          } else if (q.type === 'tf') {
+            const w = 1.0 / q.items.length;
+            let subCorrectAll = true;
+            let details = "";
+            q.items.forEach(it => {
+              totalPoints += w;
+              const uVal = userAns ? userAns[it.key] : undefined;
+              const ok = (uVal === it.correct);
+              if (ok) { earned += w; cor++; } else { incor++; subCorrectAll = false; }
+              details += `
+                <div class="content-text" style="padding-left:10px; margin-top:2px;">
+                  • ${it.key}) ${it.text} → Bạn chọn: <strong>${uVal === undefined ? 'Chưa chọn' : (uVal ? 'Đúng' : 'Sai')}</strong> | Chuẩn: <strong>${it.correct ? 'ĐÚNG' : 'SAI'}</strong> [${ok ? 'Khớp' : 'Sai'}]
+                </div>
+              `;
+            });
+            div.className = `review-item ${subCorrectAll ? 'correct' : 'incorrect'}`;
+            div.innerHTML = `
+              <div class="content-text" style="font-weight:bold; margin-bottom:4px;">
+                [${subCorrectAll ? 'ĐÚNG TẤT CẢ Ý' : 'CÓ Ý SAI'}] Câu ${idx + 1}: ${q.question}
+              </div>
+              <div class="content-text text-muted">Nguồn: ${q.source}</div>
+              ${details}
+            `;
+          }
+          box.appendChild(div);
+        });
+
+        const finalScore = totalPoints > 0 ? ((earned / totalPoints) * 10).toFixed(1) : "0.0";
+        document.getElementById('score-val').textContent = `${finalScore} / 10`;
+        document.getElementById('score-summary').textContent = `Số lượt đúng: ${cor} | Số lượt chưa đúng: ${incor}`;
+        this.switchView('view-result');
+        document.getElementById('btn-open-palette').style.display = 'none';
+      }
+
+      showPreview() {
+        const box = document.getElementById('preview-list');
+        box.innerHTML = "";
+        document.getElementById('total-count-badge').textContent = this.allQuestions.length;
+        this.allQuestions.forEach((q, idx) => {
+          const div = document.createElement('div');
+          div.className = "card";
+          let h = `<div class="content-text text-muted">#${idx+1} [${q.topic}] Nguồn: ${q.source}</div>`;
+          h += `<div class="content-text" style="font-weight:bold; margin:6px 0;">${q.question}</div>`;
+          if (q.type === 'mc') {
+            q.options.forEach(o => {
+              const ok = (o.key === q.correct);
+              h += `<div class="content-text" style="${ok ? 'font-weight:bold; text-decoration:underline;' : ''}">${o.key}. ${o.text} ${ok ? ' [ĐÁP ÁN CHUẨN]' : ''}</div>`;
+            });
+          } else {
+            q.items.forEach(it => {
+              h += `<div class="content-text">${it.key}) ${it.text} → <strong>[${it.correct ? 'ĐÚNG' : 'SAI'}]</strong></div>`;
+            });
+          }
+          div.innerHTML = h;
+          box.appendChild(div);
+        });
+        this.switchView('view-preview');
+      }
+    }
+
+    const app = new ExamController();
+  </script>
+</body>
+</html>
